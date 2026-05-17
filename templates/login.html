@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Login – UPI FraudShield{% endblock %}
+{% block content %}
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>Login to UPI FraudShield</h2>
+    {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+    {% if message %}<div class="alert success">{{ message }}</div>{% endif %}
+    
+    <form method="POST">
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="you@example.com" required/>
+      
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter your password" required/>
+      
+      <!-- Forgot Password Link -->
+      <div class="forgot-password">
+        <a href="{{ url_for('forgot_password') }}" class="forgot-link">Forgot Password?</a>
+      </div>
+      
+      <div class="role-selector">
+        <label>Login as:</label>
+        <div class="role-options">
+          <label class="role-option">
+            <input type="radio" name="role" value="user" checked>
+            <span class="role-badge user">User</span>
+            <small>Report fraud, check UPI, analyze transactions</small>
+          </label>
+          <label class="role-option">
+            <input type="radio" name="role" value="admin">
+            <span class="role-badge admin">Admin</span>
+            <small>Manage reports, block UPIs, view analytics</small>
+          </label>
+        </div>
+      </div>
+      
+      <button type="submit" class="btn-primary full">Login</button>
+    </form>
+    
+    <p class="auth-switch">Don't have an account? <a href="{{ url_for('signup') }}">Sign Up</a></p>
+    
+    <div class="demo-credentials">
+      <p><strong>Demo Credentials:</strong></p>
+      <p>User: user@example.com / user123</p>
+      <p>Admin: admin@upifraudshield.com / admin123</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.role-selector {
+  margin: 20px 0;
+}
+
+.role-selector > label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+
+.role-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: var(--card);
+}
+
+.role-option:hover {
+  border-color: var(--primary);
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.role-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.role-badge {
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+
+.role-badge.user {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.role-badge.admin {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.role-option small {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.forgot-password {
+  text-align: right;
+  margin: 10px 0 20px 0;
+}
+
+.forgot-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: 0.3s;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+.demo-credentials {
+  margin-top: 20px;
+  padding: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.demo-credentials p {
+  margin: 5px 0;
+}
+
+.alert {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.alert.danger {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.alert.success {
+  background: #d1fae5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+</style>
+
+{% endblock %}

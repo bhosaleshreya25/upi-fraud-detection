@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+{% block title %}Analyze Transaction - UPI FraudShield{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Transaction Fraud Analysis</h1>
+  <p>Enter transaction details and our ML ensemble will detect fraud in real-time</p>
+</div>
+
+<div class="analyze-container">
+  <div class="form-card">
+    <form method="POST" id="analyzeForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Sender UPI ID</label>
+          <input type="text" name="sender_upi" placeholder="e.g., yourname@okhdfcbank" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Receiver UPI ID</label>
+          <input type="text" name="receiver_upi" placeholder="e.g., merchant@paytm" required>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Payment App</label>
+          <select name="payment_app">
+            <option>Google Pay</option>
+            <option>PhonePe</option>
+            <option>Paytm</option>
+            <option>Amazon Pay</option>
+            <option>Bank Transfer</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" name="amount" step="0.01" placeholder="Enter amount" required>
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Current Account Balance (₹)</label>
+          <input type="number" name="balance" step="0.01" placeholder="Your current balance" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Date & Time</label>
+          <input type="datetime-local" name="datetime">
+        </div>
+      </div>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label>Device Used</label>
+          <select name="device">
+            <option value="trusted">Trusted Device</option>
+            <option value="new">New Device</option>
+            <option value="unknown">Unknown Device</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>First time sending to this receiver?</label>
+          <select name="is_new_receiver">
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Transaction Frequency (last 24h)</label>
+        <input type="number" name="frequency" value="1" min="1" placeholder="How many transactions today">
+      </div>
+      
+      <button type="submit" class="btn-primary">🔍 Analyze Transaction</button>
+    </form>
+  </div>
+  
+  {% if result %}
+  <div class="result-card {% if result.label == 'Fraud' %}result-fraud{% elif result.label == 'Suspicious' %}result-suspicious{% else %}result-safe{% endif %}">
+    <div class="result-header">
+      <h2>
+        {% if result.label == 'Fraud' %}
+          ⚠️ This transaction appears suspicious and has been blocked to protect you.
+        {% elif result.label == 'Suspicious' %}
+          ⚠️ Suspicious Transaction Detected - Verification Required
+        {% else %}
+          ✅ Transaction appears Safe
+        {% endif %}
+      </h2>
+    </div>
+    
+    <div class="result-details">
+      <div class="detail-item">
+        <span class="detail-label">Transaction ID:</span>
+        <span class="detail-value">{{ result.transaction_id }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Receiver UPI:</span>
+        <span class="detail-value">{{ result.receiver_upi }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Amount:</span>
+        <span class="detail-value">₹{{ "%.2f"|format(result.amount) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Risk Score:</span>
+        <span class="detail-value risk-score">{{ result.risk_score }}%</span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Verdict:</span>
+        <span class="detail-value">
+          <span class="badge {% if result.label == 'Fraud' %}badge-fraud{% elif result.label == 'Suspicious' %}badge-suspicious{% else %}badge-safe{% endif %}">
+            {{ result.label }}
+          </span>
+        </span>
+      </div>
+      <div class="detail-item">
+        <span class="detail-label">Action:</span>
+        <span class="detail-value">{{ result.action }}</span>
+      </div>
+      {% if result.reasons %}
+      <div class="detail-item full-width">
+        <span class="detail-label">Reasons:</span>
+        <ul class="reasons-list">
+          {% for reason in result.reasons %}
+          <li>{{ reason }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    
+    <div class="result-actions">
+      {% if result.label == 'Fraud' %}
+        <button onclick="openReportPopup('{{ result.receiver_upi }}', '{{ result.amount }}')" class="btn-warning">
+          🚨 Report this Fraud
+        </button>
+      {% endif %}
+      <button onclick="window.location.reload()" class="btn-secondary">New Analysis</button>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Report Popup Modal -->
+<div id="reportModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Report Fraudulent Transaction</h3>
+      <span class="close" onclick="closeReportPopup()">&times;</span>
+    </div>
+    <form id="reportForm" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>UPI ID:</label>
+          <input type="text" name="upi_id" id="report_upi_id" readonly>
+        </div>
+        <div class="form-group">
+          <label>Amount:</label>
+          <input type="text" name="amount" id="report_amount" readonly>
+        </div>
+        <div class="form-group">
+          <label>Fraud Type:</label>
+          <select name="fraud_type" required>
+            <option value="">Select fraud type</option>
+            <option value="Phishing">Phishing Scam</option>
+            <option value="Fake UPI">Fake UPI ID</option>
+            <option value="Unauthorized Transaction">Unauthorized Transaction</option>
+            <option value="Lottery Scam">Lottery Scam</option>
+            <option value="Refund Scam">Refund Scam</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description:</label>
+          <textarea name="description" rows="3" placeholder="Describe what happened..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" onclick="closeReportPopup()" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openReportPopup(upiId, amount) {
+  document.getElementById('report_upi_id').value = upiId;
+  document.getElementById('report_amount').value = amount;
+  document.getElementById('reportModal').style.display = 'flex';
+  
+  // Set form action
+  document.getElementById('reportForm').action = "{{ url_for('report_transaction') }}";
+}
+
+function closeReportPopup() {
+  document.getElementById('reportModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('reportModal');
+  if (event.target == modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Show flash messages as popup
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      alert("{{ message }}");
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+</script>
+
+<style>
+.page-header {
+  margin-bottom: 30px;
+}
+
+.page-header h1 {
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  color: var(--muted);
+}
+
+.analyze-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-card {
+  background: var(--card);
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+}
+
+.result-card {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.result-fraud {
+  border-left: 6px solid #ef4444;
+}
+
+.result-suspicious {
+  border-left: 6px solid #f59e0b;
+}
+
+.result-safe {
+  border-left: 6px solid #10b981;
+}
+
+.result-header {
+  padding: 20px 25px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.result-header h2 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--text);
+}
+
+.result-details {
+  padding: 25px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-item.full-width {
+  grid-column: span 2;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.detail-value {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.risk-score {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ef4444;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-fraud {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badge-suspicious {
+  background: #fed7aa;
+  color: #d97706;
+}
+
+.badge-safe {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.reasons-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.reasons-list li {
+  color: var(--muted);
+  margin: 5px 0;
+}
+
+.result-actions {
+  padding: 20px 25px;
+  display: flex;
+  gap: 15px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-warning {
+  flex: 1;
+  padding: 10px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-warning:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 10px;
+  background: var(--border);
+  color: var(--text);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: var(--muted);
+  color: white;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--card);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text);
+}
+
+.close {
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.close:hover {
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.modal-footer {
+  padding: 20px 25px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .result-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-item.full-width {
+    grid-column: span 1;
+  }
+}
+</style>
+{% endblock %}

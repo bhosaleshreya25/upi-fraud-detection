@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel – UPI FraudShield{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>Admin Control Panel</h1>
+  <p>Manage fraud reports, block UPI IDs, and monitor system activity.</p>
+</div>
+
+<!-- Stats Summary -->
+<div class="dash-summary">
+  <div class="sum-card blue"><span class="sum-num">{{ reports|length }}</span><span class="sum-lbl">Total Reports</span></div>
+  <div class="sum-card red"><span class="sum-num">{{ transactions|length }}</span><span class="sum-lbl">Transactions</span></div>
+  <div class="sum-card orange"><span class="sum-num">{{ blocked_upis|length }}</span><span class="sum-lbl">Blocked UPIs</span></div>
+  <div class="sum-card purple"><span class="sum-num">{{ alerts|length }}</span><span class="sum-lbl">Alerts</span></div>
+</div>
+
+<!-- Block UPI Section -->
+<div class="form-card">
+  <h3>Block a UPI ID</h3>
+  <form method="POST" action="{{ url_for('admin_block_upi') }}">
+    <div class="input-row">
+      <input type="text" name="upi_id" placeholder="Enter UPI ID to block" required/>
+      <input type="text" name="reason" placeholder="Reason for blocking" required/>
+      <button type="submit" class="btn-danger">Block UPI</button>
+    </div>
+  </form>
+</div>
+
+<!-- Blocked UPIs List -->
+<div class="table-card">
+  <h3>Blocked UPI IDs</h3>
+  <table class="metrics-table">
+    <thead>
+      <tr><th>UPI ID</th><th>Reason</th><th>Blocked At</th></tr>
+    </thead>
+    <tbody>
+      {% for upi in blocked_upis %}
+      <tr>
+        <td><strong>{{ upi.upi }}</strong></strong></td>
+        <td>{{ upi.reason }}</strong></td>
+        <td>{{ upi.blocked_at.strftime('%Y-%m-%d %H:%M') if upi.blocked_at else 'N/A' }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" style="text-align:center">No blocked UPIs</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Fraud Reports -->
+<div class="table-card">
+  <h3>Fraud UPI Reports</h3>
+  <table class="metrics-table">
+    <thead>
+      <tr><th>UPI ID</th><th>Report Count</th><th>Status</th><th>Last Reported</th></tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+      <tr>
+        <td><strong>{{ report.upi }}</strong></strong></td>
+        <td>{{ report.report_count }}</strong></td>
+        <td><span class="status-badge {% if report.status == 'Fraud' %}fraud{% else %}safe{% endif %}">{{ report.status }}</span></strong></td>
+        <td>{{ report.last_reported.strftime('%Y-%m-%d %H:%M') if report.last_reported else 'N/A' }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" style="text-align:center">No reports found</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Recent Transactions -->
+<div class="table-card">
+  <h3>Recent Transactions</h3>
+  <table class="metrics-table">
+    <thead>
+      <tr><th>ID</th><th>UPI</th><th>Amount</th><th>Risk Score</th><th>Status</th><th>Time</th></tr>
+    </thead>
+    <tbody>
+      {% for txn in transactions %}
+      <tr>
+        <td>{{ txn.transaction_id }}</strong></td>
+        <td>{{ txn.upi }}</strong></td>
+        <td>Rs. {{ "%.0f"|format(txn.amount) }}</strong></td>
+        <td>{{ txn.risk_score }}</strong></td>
+        <td><span class="status-badge {% if txn.label == 'Fraud' %}fraud{% else %}safe{% endif %}">{{ txn.label }}</span></strong></td>
+        <td>{{ txn.time }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" style="text-align:center">No transactions found</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Alert Logs -->
+<div class="table-card">
+  <h3>Fraud Alerts</h3>
+  <table class="metrics-table">
+    <thead>
+      <tr><th>Type</th><th>UPI ID</th><th>Amount</th><th>Risk Score</th><th>Timestamp</th></tr>
+    </thead>
+    <tbody>
+      {% for alert in alerts %}
+      <tr>
+        <td><span class="status-badge {% if alert.type == 'email' %}safe{% else %}fraud{% endif %}">{{ alert.type }}</span></strong></td>
+        <td>{{ alert.upi_id }}</strong></td>
+        <td>Rs. {{ "%.0f"|format(alert.amount) }}</strong></td>
+        <td>{{ alert.risk_score }}</strong></td>
+        <td>{{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') if alert.timestamp else 'N/A' }}</strong></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center">No alerts generated</strong></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<a href="/admin/reports" class="admin-card">
+    <div class="card-icon">📋</div>
+    <h3>Manage Fraud Reports</h3>
+    <p>Review, block, or reject reported fraud cases</p>
+</a>
+{% endblock %}

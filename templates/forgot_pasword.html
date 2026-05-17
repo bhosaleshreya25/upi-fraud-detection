@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Forgot Password{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h2>Forgot Password</h2>
+    <p>Enter your email address and we'll send you a password reset link.</p>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="you@example.com" required/>
+      
+      <button type="submit" class="btn-primary full">Send Reset Link</button>
+    </form>
+    
+    {% if reset_token %}
+    <div class="reset-token">
+      <p><strong>Reset Link (Demo):</strong></p>
+      <code>{{ reset_token }}</code>
+      <p><a href="{{ url_for('reset_password') }}?token={{ reset_token }}">Click here to reset password</a></p>
+    </div>
+    {% endif %}
+    
+    <p class="auth-switch">
+      <a href="{{ url_for('login') }}">Back to Login</a>
+    </p>
+  </div>
+</div>
+
+<style>
+.reset-token {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  word-break: break-all;
+}
+
+.reset-token code {
+  display: block;
+  padding: 10px;
+  background: #e5e7eb;
+  border-radius: 6px;
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+.alert.error {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.alert.info {
+  background: #dbeafe;
+  color: #2563eb;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+</style>
+{% endblock %}

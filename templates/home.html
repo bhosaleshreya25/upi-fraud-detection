@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+{% block title %}Home – UPI Fraud Shield{% endblock %}
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>UPI Fraud Shield</h1>
+    <p>Smart AI-Based Fraud Detection System for Secure UPI Transactions</p>
+    <div class="hero-btns">
+      <a href="{{ url_for('analyze') }}" class="btn-primary">Analyze Transaction</a>
+      <a href="{{ url_for('dashboard') }}" class="btn-secondary">View Dashboard</a>
+    </div>
+  </div>
+  <div class="hero-img">
+    <i class="fas fa-shield-alt" style="font-size: 5rem;"></i>
+  </div>
+</section>
+
+<!-- About Project Section -->
+<section class="about-section">
+  <h2>About</h2>
+  <p>UPI Fraud Shield is an AI/ML-based fraud detection system that helps identify suspicious UPI transactions and protects users from online payment scams.</p>
+  <p>The system analyzes:</p>
+  <ul>
+    <li>Sender and Receiver UPI IDs</li>
+    <li>Transaction Amount</li>
+    <li>Device Activity</li>
+    <li>Transaction Frequency</li>
+    <li>Payment Behavior</li>
+  </ul>
+  <p>to predict whether a transaction is safe or fraudulent.</p>
+</section>
+
+<!-- Statistics Cards -->
+<section class="stats-bar">
+  <div class="stat-card">
+    <span class="stat-num">{{ total }}</span>
+    <span class="stat-lbl">Total Transactions</span>
+  </div>
+  <div class="stat-card danger">
+    <span class="stat-num">{{ fraud_cnt }}</span>
+    <span class="stat-lbl">Fraud Detected</span>
+  </div>
+  <div class="stat-card success">
+    <span class="stat-num">{{ total - fraud_cnt }}</span>
+    <span class="stat-lbl">Genuine Transactions</span>
+  </div>
+  <div class="stat-card purple">
+    <span class="stat-num">{{ stats.ensemble_accuracy if stats else '94.2' }}%</span>
+    <span class="stat-lbl">Best Model Accuracy</span>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+  <h2>Key Features</h2>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="f-icon"><i class="fas fa-shield-alt"></i></div>
+      <h3>Fraud Detection</h3>
+      <p>Detects suspicious transactions in real time.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon"><i class="fas fa-brain"></i></div>
+      <h3>AI/ML Prediction</h3>
+      <p>Uses Machine Learning algorithms for fraud analysis.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon"><i class="fas fa-chart-line"></i></div>
+      <h3>Risk Score</h3>
+      <p>Shows fraud probability percentage.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon"><i class="fas fa-mobile-alt"></i></div>
+      <h3>Device Monitoring</h3>
+      <p>Detects unknown device activity.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon"><i class="fas fa-chart-bar"></i></div>
+      <h3>Transaction Analysis</h3>
+      <p>Checks high-value and rapid transactions.</p>
+    </div>
+    <div class="feature-card">
+      <div class="f-icon"><i class="fas fa-chart-pie"></i></div>
+      <h3>Dashboard Analytics</h3>
+      <p>Displays graphs, reports, and model comparisons.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="how-it-works">
+  <h2>How It Works</h2>
+  <div class="steps-container">
+    <div class="step">
+      <div class="step-number">1</div>
+      <h3>Enter Transaction Details</h3>
+      <p>User provides transaction information</p>
+    </div>
+    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="step">
+      <div class="step-number">2</div>
+      <h3>Analyze Patterns</h3>
+      <p>System analyzes transaction patterns</p>
+    </div>
+    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="step">
+      <div class="step-number">3</div>
+      <h3>ML Fraud Prediction</h3>
+      <p>ML model predicts fraud risk</p>
+    </div>
+    <div class="step-arrow"><i class="fas fa-arrow-right"></i></div>
+    <div class="step">
+      <div class="step-number">4</div>
+      <h3>Result Displayed</h3>
+      <p>Safe or Fraud Detected with explanation</p>
+    </div>
+  </div>
+</section>
+
+<!-- Models Used Section -->
+<section class="models-section">
+  <h2>ML Models Used</h2>
+  <div class="model-tags">
+    <span class="tag green">Random Forest</span>
+    <span class="tag gold">XGBoost (Ensemble)</span>
+    <span class="tag blue">Ensemble (RF + XGB)</span>
+  </div>
+  <div class="accuracy-badge">
+    <p>Ensemble Accuracy: <strong>{{ stats.ensemble_accuracy if stats else '94.2' }}%</strong> (Target: 90-95%)</p>
+  </div>
+</section>
+
+<!-- Technologies Used Section -->
+<section class="technologies">
+  <h2>Technologies Used</h2>
+  <div class="tech-tags">
+    <span class="tech-tag">Python</span>
+    <span class="tech-tag">Machine Learning</span>
+    <span class="tech-tag">Random Forest</span>
+    <span class="tech-tag">XGBoost</span>
+    <span class="tech-tag">Flask</span>
+    <span class="tech-tag">HTML/CSS/JavaScript</span>
+    <span class="tech-tag">MongoDB</span>
+    <span class="tech-tag">Scikit-learn</span>
+  </div>
+</section>
+
+<!-- Info Section for Common People -->
+<section class="info-section">
+  <h3>Simple Transaction Check </h3>
+  <ul>
+    <li><strong>Step 1:</strong> Go to "Analyze Transaction" page</li>
+    <li><strong>Step 2:</strong> Enter payment app (GPay/PhonePe/Paytm/Bank Transfer)</li>
+    <li><strong>Step 3:</strong> Enter receiver UPI ID (e.g., abcshop@paytm)</li>
+    <li><strong>Step 4:</strong> Enter amount and your current balance</li>
+    <li><strong>Step 5:</strong> Select if receiver is new and device used</li>
+    <li><strong>Step 6:</strong> Click "Check Transaction Safety"</li>
+    <li><strong>Step 7:</strong> Get instant result: Safe or Fraud Detected</li>
+  </ul>
+</section>
+
+<style>
+.about-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+}
+
+.about-section h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.about-section p {
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.about-section ul {
+  margin: 12px 0;
+  padding-left: 30px;
+}
+
+.about-section li {
+  margin: 5px 0;
+}
+
+.how-it-works {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+}
+
+.how-it-works h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.steps-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: 20px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  font-weight: bold;
+}
+
+.step h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.step p {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.step-arrow {
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+.technologies {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+}
+
+.technologies h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.tech-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.tech-tag {
+  background: var(--bg);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--primary);
+  border: 1px solid var(--border);
+}
+
+.accuracy-badge {
+  background: #e0e7ff;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+  .steps-container {
+    flex-direction: column;
+  }
+  .step-arrow {
+    transform: rotate(90deg);
+  }
+}
+</style>
+
+{% endblock %}

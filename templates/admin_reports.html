@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Fraud Reports</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        h2 {
+            color: #555;
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-card h3 { font-size: 32px; margin-bottom: 5px; }
+        .stat-card p { font-size: 14px; opacity: 0.9; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .pending { background: #fff3cd; border-left: 4px solid #ffc107; }
+        .blocked { background: #f8d7da; border-left: 4px solid #dc3545; }
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending { background: #ffc107; color: #000; }
+        .status-resolved { background: #28a745; color: white; }
+        .status-rejected { background: #dc3545; color: white; }
+        button {
+            padding: 5px 10px;
+            margin: 2px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .block-btn { background: #dc3545; color: white; }
+        .block-upi-btn { background: #ff6b6b; color: white; }
+        .unblock-btn { background: #28a745; color: white; }
+        .reject-btn { background: #6c757d; color: white; }
+        input[type="text"], textarea {
+            padding: 5px;
+            width: 150px;
+            font-size: 12px;
+        }
+        .nav-links {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+        .back-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 Admin - Fraud Report Management</h1>
+        
+        <div class="nav-links">
+            <a href="/admin">📊 Admin Dashboard</a>
+            <a href="/dashboard">📈 Main Dashboard</a>
+            <a href="/logout">🚪 Logout</a>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <h3 id="pendingCount">{{ pending_reports|length }}</h3>
+                <p>Pending Reports</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ blocked_upis|length }}</h3>
+                <p>Blocked UPI IDs</p>
+            </div>
+            <div class="stat-card">
+                <h3>{{ blocked_transactions|length }}</h3>
+                <p>Blocked Transactions</p>
+            </div>
+        </div>
+
+        <!-- Pending Reports Section -->
+        <h2>📋 Pending Fraud Reports</h2>
+        {% if pending_reports %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Report ID</th>
+                    <th>Reported By</th>
+                    <th>UPI ID</th>
+                    <th>Transaction ID</th>
+                    <th>Amount</th>
+                    <th>Fraud Type</th>
+                    <th>Description</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in pending_reports %}
+                <tr class="pending">
+                    <td>{{ report.report_id }}</td>
+                    <td>{{ report.reported_by_name }}</td>
+                    <td>{{ report.upi_id or 'N/A' }}</td>
+                    <td>{{ report.transaction_id or 'N/A' }}</td>
+                    <td>₹{{ "%.2f"|format(report.amount) }}</td>
+                    <td>{{ report.fraud_type }}</td>
+                    <td>{{ report.description[:50] }}{% if report.description|length > 50 %}...{% endif %}</td>
+                    <td>{{ report.created_at }}</td>
+                    <td>
+                        <!-- Block Transaction Form -->
+                        {% if report.transaction_id %}
+                        <form method="POST" action="/admin/block_transaction" style="display: inline-block;">
+                            <input type="hidden" name="transaction_id" value="{{ report.transaction_id }}">
+                            <input type="hidden" name="report_id" value="{{ report._id }}">
+                            <input type="text" name="reason" placeholder="Block reason" required style="width: 120px;">
+                            <button type="submit" class="block-btn">🔒 Block TXN</button>
+                        </form>
+                        {% endif %}
+                        
+                        <!-- Block UPI Form -->
+                        {% if report.upi_id %}
+                        <form method="POST" action="/admin/block_transaction" style="display: inline-block;">
+                            <input type="hidden" name="upi_id" value="{{ report.upi_id }}">
+                            <input type="hidden" name="report_id" value="{{ report._id }}">
+                            <input type="hidden" name="block_type" value="upi">
+                            <input type="text" name="reason" placeholder="Block reason" required style="width: 120px;">
+                            <button type="submit" class="block-upi-btn">🚫 Block UPI</button>
+                        </form>
+                        {% endif %}
+                        
+                        <!-- Reject Report Form -->
+                        <form method="POST" action="/admin/reject_report" style="display: inline-block;">
+                            <input type="hidden" name="report_id" value="{{ report._id }}">
+                            <input type="text" name="rejection_reason" placeholder="Rejection reason" style="width: 100px;">
+                            <button type="submit" class="reject-btn">❌ Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>✅ No pending reports. All clear!</p>
+        {% endif %}
+
+        <!-- Blocked UPI IDs Section -->
+        <h2>🚫 Blocked UPI IDs</h2>
+        {% if blocked_upis %}
+        <table>
+            <thead>
+                <tr>
+                    <th>UPI ID</th>
+                    <th>Reason</th>
+                    <th>Blocked By</th>
+                    <th>Blocked Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for blocked in blocked_upis %}
+                <tr class="blocked">
+                    <td><strong>{{ blocked.upi }}</strong></td>
+                    <td>{{ blocked.reason }}</td>
+                    <td>{{ blocked.blocked_by }}</td>
+                    <td>{{ blocked.blocked_at }}</td>
+                    <td>
+                        <form method="POST" action="/admin/unblock_transaction">
+                            <input type="hidden" name="upi_id" value="{{ blocked.upi }}">
+                            <input type="hidden" name="unblock_type" value="upi">
+                            <button type="submit" class="unblock-btn">🔓 Unblock</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>✅ No blocked UPI IDs.</p>
+        {% endif %}
+
+        <!-- Blocked Transactions Section -->
+        <h2>🔒 Blocked Transactions</h2>
+        {% if blocked_transactions %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Sender UPI</th>
+                    <th>Receiver UPI</th>
+                    <th>Amount</th>
+                    <th>Block Reason</th>
+                    <th>Blocked By</th>
+                    <th>Blocked Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in blocked_transactions %}
+                <tr class="blocked">
+                    <td>{{ txn.transaction_id }}</td>
+                    <td>{{ txn.sender_upi }}</td>
+                    <td>{{ txn.receiver_upi }}</td>
+                    <td>₹{{ "%.2f"|format(txn.amount) }}</td>
+                    <td>{{ txn.block_reason }}</td>
+                    <td>{{ txn.blocked_by }}</td>
+                    <td>{{ txn.timestamp }}</td>
+                    <td>
+                        <form method="POST" action="/admin/unblock_transaction">
+                            <input type="hidden" name="transaction_id" value="{{ txn.transaction_id }}">
+                            <input type="hidden" name="unblock_type" value="transaction">
+                            <button type="submit" class="unblock-btn">🔓 Unblock</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>✅ No blocked transactions.</p>
+        {% endif %}
+
+        <a href="/admin" class="back-btn">← Back to Admin Dashboard</a>
+    </div>
+
+    <script>
+        // Auto-refresh stats every 30 seconds
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/admin/stats');
+                const data = await response.json();
+                document.getElementById('pendingCount').innerText = data.total_pending_reports;
+            } catch(e) {
+                console.log('Stats refresh failed');
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

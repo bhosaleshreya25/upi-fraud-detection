@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    "*.html": "html"
+  },
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "html.validate.styles": false,
+  "html.validate.scripts": false,
+  "javascript.validate.enable": false,
+  "typescript.validate.enable": false
+}

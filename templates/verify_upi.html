@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Verify UPI – UPI FraudShield{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>UPI ID Verification</h1>
+  <p>Check any UPI ID against our fraud report database instantly.</p>
+</div>
+
+<div class="form-card">
+  <form method="POST">
+    <label>Enter UPI ID</label>
+    <div class="input-row">
+      <input type="text" name="upi_id" placeholder="e.g. abc@okaxis or name@paytm" value="{{ result.upi if result else '' }}" required/>
+      <button type="submit" class="btn-primary">Check Now</button>
+    </div>
+  </form>
+</div>
+
+{% if result %}
+{% set card_class = 'success' %}
+{% if result.risk_score >= 70 %}
+  {% set card_class = 'danger' %}
+{% elif result.risk_score >= 50 %}
+  {% set card_class = 'warn' %}
+{% elif result.risk_score >= 30 %}
+  {% set card_class = 'warn-light' %}
+{% endif %}
+
+<div class="result-card {{ card_class }}">
+  <div class="result-header">
+    {% if result.risk_score >= 70 %}
+      <span class="big-icon">!</span>
+      <h2>FRAUD DETECTED</h2>
+    {% elif result.risk_score >= 50 %}
+      <span class="big-icon">!</span>
+      <h2>HIGH RISK</h2>
+    {% elif result.risk_score >= 30 %}
+      <span class="big-icon">!</span>
+      <h2>MEDIUM RISK</h2>
+    {% else %}
+      <span class="big-icon">✓</span>
+      <h2>SAFE UPI ID</h2>
+    {% endif %}
+  </div>
+
+  <div class="result-details">
+    <div class="detail-row">
+      <span>UPI ID</span>
+      <strong>{{ result.upi }}</strong>
+    </div>
+    <div class="detail-row">
+      <span>Risk Score</span>
+      <strong>{{ result.risk_score }} / 100</strong>
+    </div>
+    <div class="detail-row">
+      <span>Risk Level</span>
+      <strong>
+        {% if result.risk_score >= 70 %}Critical
+        {% elif result.risk_score >= 50 %}High
+        {% elif result.risk_score >= 30 %}Medium
+        {% else %}Low{% endif %}
+      </strong>
+    </div>
+    {% if result.report_count > 0 %}
+    <div class="detail-row">
+      <span>Report Count</span>
+      <strong>{{ result.report_count }} report(s)</strong>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Risk meter -->
+  <div class="risk-meter">
+    <label>Risk Level</label>
+    <div class="meter-bar">
+      <div class="meter-fill" style="width:{{ result.risk_score }}%; background: {% if result.risk_score >= 70 %}#e74c3c{% elif result.risk_score >= 50 %}#f39c12{% elif result.risk_score >= 30 %}#f1c40f{% else %}#2ecc71{% endif %};"></div>
+    </div>
+    <span>{{ result.risk_score }}%</span>
+  </div>
+
+  <!-- Warnings -->
+  {% if result.warnings and result.warnings|length > 0 %}
+  <div class="warning-box">
+    <strong>Risk Factors Detected:</strong>
+    <ul style="margin-top: 8px; margin-left: 20px;">
+      {% for warning in result.warnings %}
+      <li>{{ warning }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Critical warning for high risk -->
+  {% if result.risk_score >= 50 %}
+  <div class="critical-warning">
+    <strong>CRITICAL WARNING:</strong> Do NOT send money to this UPI ID. Block and report immediately.
+  </div>
+  {% elif result.risk_score >= 30 %}
+  <div class="medium-warning">
+    <strong>CAUTION:</strong> This UPI has suspicious indicators. Verify before transacting.
+  </div>
+  {% else %}
+  <div class="safe-note">
+    <strong>SAFE NOTE:</strong> This UPI appears legitimate. Always double-check before sending money.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Report section -->
+<div class="report-card">
+  <h3>Report this UPI as Fraud</h3>
+  <p>Help protect others by reporting this UPI ID if you've had a bad experience.</p>
+  <form method="POST" action="{{ url_for('report_upi') }}">
+    <input type="hidden" name="upi_id" value="{{ result.upi }}"/>
+    <button type="submit" class="btn-danger">Report {{ result.upi }} as Fraud</button>
+  </form>
+</div>
+{% endif %}
+
+<!-- Info section -->
+<div class="info-section">
+  <h3>How UPI Verification Works</h3>
+  <ul>
+    <li><strong>Safe</strong> – No reports found. Always verify before sending large amounts.</li>
+    <li><strong>Low Risk</strong> – 1 report found. Proceed with caution.</li>
+    <li><strong>Medium Risk</strong> – 2-4 reports. High caution advised.</li>
+    <li><strong>High/Critical Risk</strong> – 5+ reports or admin blocked. Do NOT transact.</li>
+  </ul>
+</div>
+
+<style>
+.critical-warning {
+  background: #fee2e2;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  color: #991b1b;
+}
+.medium-warning {
+  background: #fed7aa;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  color: #92400e;
+}
+.safe-note {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  color: #065f46;
+}
+.big-icon {
+  font-size: 2rem;
+  margin-right: 10px;
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}UPI FraudShield{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: #334155;
+      --primary: #3b82f6;
+    }
+
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #3b82f6;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .navbar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-brand {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .btn-nav {
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-decoration: none;
+      background: #3b82f6;
+      color: white !important;
+      transition: all 0.3s;
+    }
+
+    .btn-nav:hover {
+      background: #2563eb;
+    }
+
+    .btn-signup {
+      background: #10b981;
+    }
+
+    .btn-signup:hover {
+      background: #059669;
+    }
+
+    .welcome-text {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .user-role-badge {
+      background: var(--primary);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+    }
+
+    .user-role-badge.admin {
+      background: #f59e0b;
+    }
+
+    .theme-btn-nav {
+      background: none;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .theme-btn-nav:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    main {
+      min-height: calc(100vh - 180px);
+      padding: 20px;
+    }
+
+    .flash-message {
+      padding: 12px 20px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+    }
+
+    .flash-message.success {
+      background: #10b981;
+    }
+
+    .flash-message.error {
+      background: #ef4444;
+    }
+
+    .flash-message.warning {
+      background: #f59e0b;
+    }
+
+    .flash-message.info {
+      background: #3b82f6;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      background: var(--card);
+    }
+
+    .theme-btn-footer {
+      background: none;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text);
+      margin-top: 10px;
+    }
+
+    .theme-btn-footer:hover {
+      background: var(--primary);
+      color: white;
+    }
+  </style>
+
+  {% block head %}{% endblock %}
+</head>
+
+<body>
+
+<nav class="navbar">
+
+  <div class="nav-brand">
+    UPI FraudShield
+  </div>
+
+  <div class="nav-links">
+
+    <a href="{{ url_for('home') }}">Home</a>
+
+    <a href="{{ url_for('verify_upi') }}">Verify UPI</a>
+
+    <!-- FIXED ERROR HERE -->
+    <a href="{{ url_for('analyze') }}">Analyze Transaction</a>
+
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+
+    {% if logged_in %}
+
+      <a href="{{ url_for('report_fraud_page') }}">
+        Report Fraud
+      </a>
+
+      <a href="{{ url_for('user_reports') }}">
+        My Reports
+      </a>
+
+      {% if is_admin %}
+        <a href="{{ url_for('admin') }}"
+           class="btn-nav"
+           style="background:#f59e0b;">
+          Admin Panel
+        </a>
+      {% endif %}
+
+      <span class="welcome-text">
+        Welcome, {{ user_name }}
+      </span>
+
+      <span class="user-role-badge {% if is_admin %}admin{% endif %}">
+        {{ 'Admin' if is_admin else 'User' }}
+      </span>
+
+      <a href="{{ url_for('logout') }}" class="btn-nav">
+        Logout
+      </a>
+
+    {% else %}
+
+      <a href="{{ url_for('login') }}" class="btn-nav">
+        Login
+      </a>
+
+      <a href="{{ url_for('signup') }}"
+         class="btn-nav btn-signup">
+        Sign Up
+      </a>
+
+    {% endif %}
+
+    <!-- THEME BUTTON MOVED TO TOP - RIGHT HERE -->
+    <button onclick="toggleTheme()" class="theme-btn-nav" title="Toggle Dark/Light Mode">
+      🌓 Theme
+    </button>
+
+  </div>
+</nav>
+
+<main>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+
+      {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+</main>
+
+<footer>
+
+  <p>
+    UPI FraudShield - AI Powered Fraud Detection System
+  </p>
+
+  <!-- Optional: Keep a small theme button in footer too -->
+  <button onclick="toggleTheme()" class="theme-btn-footer">
+    🌓 Toggle Theme
+  </button>
+
+</footer>
+
+<script>
+
+  function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+
+  function toggleTheme() {
+
+    const currentTheme =
+      document.documentElement.getAttribute('data-theme');
+
+    const newTheme =
+      currentTheme === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.setAttribute(
+      'data-theme',
+      newTheme
+    );
+
+    localStorage.setItem('theme', newTheme);
+  }
+
+  initTheme();
+
+</script>
+
+</body>
+</html>

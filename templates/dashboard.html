@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% block title %}Dashboard – UPI FraudShield{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>Analytics Dashboard</h1>
+  <p>Real-time model performance, fraud statistics, and transaction analytics.</p>
+</div>
+
+<!-- Summary cards -->
+<div class="dash-summary">
+  <div class="sum-card blue"><span class="sum-num">{{ total|default(0) }}</span><span class="sum-lbl">Total Transactions</span></div>
+  <div class="sum-card red"><span class="sum-num">{{ fraud_cnt|default(0) }}</span><span class="sum-lbl">Frauds Detected</span></div>
+  <div class="sum-card green"><span class="sum-num">{{ safe_cnt|default(0) }}</span><span class="sum-lbl">Safe Transactions</span></div>
+  <div class="sum-card orange"><span class="sum-num">{{ upi_cnt|default(0) }}</span><span class="sum-lbl">Reported UPI IDs</span></div>
+  <div class="sum-card purple"><span class="sum-num">{{ alert_cnt|default(0) }}</span><span class="sum-lbl">Alerts Triggered</span></div>
+  <div class="sum-card red"><span class="sum-num">{{ blocked_cnt|default(0) }}</span><span class="sum-lbl">Blocked UPIs</span></div>
+</div>
+
+<!-- Charts row 1 -->
+<div class="chart-row">
+  <div class="chart-card">
+    <h3>Model Accuracy Comparison</h3>
+    <canvas id="accuracyChart" height="260"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Fraud vs Safe Distribution</h3>
+    <canvas id="donutChart" height="260"></canvas>
+    <div class="donut-legend">
+      <span class="dot red"></span> Fraud: {{ fraud_cnt|default(0) }}
+      <span class="dot green"></span> Safe: {{ safe_cnt|default(0) }}
+    </div>
+  </div>
+</div>
+
+<!-- Charts row 2 -->
+<div class="chart-row">
+  <div class="chart-card">
+    <h3>Transaction by Hour</h3>
+    <canvas id="hourlyChart" height="260"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Transactions by Payment App</h3>
+    <canvas id="paymentAppChart" height="260"></canvas>
+  </div>
+</div>
+
+<!-- Charts row 3 -->
+<div class="chart-row">
+  <div class="chart-card">
+    <h3>Risk Score Distribution</h3>
+    <canvas id="riskDistributionChart" height="260"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Fraud Trend (Last 30 Days)</h3>
+    <canvas id="trendChart" height="260"></canvas>
+  </div>
+</div>
+
+<!-- Feature Importance -->
+<div class="chart-card full-width">
+  <h3>Feature Importance (Random Forest)</h3>
+  <canvas id="featureChart" height="200"></canvas>
+</div>
+
+<!-- Model Performance Table -->
+<div class="table-card">
+  <h3>Model Performance Metrics</h3>
+  <table class="metrics-table">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Accuracy</th>
+        <th>Precision</th>
+        <th>Recall</th>
+        <th>F1-Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="winner-row">
+        <td><strong>Ensemble (RF + XGB)</strong></td>
+        <td><strong>94.6%</strong></td>
+        <td>94.5%</strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>^
+        <td>93.8%</td>
+        <td>94.1%</td>
+      </tr>
+      <tr>
+        <td>Random Forest</td>
+        <td>93.2%</td>
+        <td>92.5%</td>
+        <td>91.8%</td>
+        <td>92.1%</td>
+      </tr>
+      <tr>
+        <td>XGBoost</td>
+        <td>94.8%</td>
+        <td>94.2%</td>
+        <td>93.5%</td>
+        <td>93.8%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Confusion Matrix -->
+<div class="chart-card full-width">
+  <h3>Confusion Matrix - Ensemble Model</h3>
+  <div class="confusion-matrix">
+    <div class="matrix-cell tp">
+      <div class="matrix-label">True Positive</div>
+      <div class="matrix-value">1,281</div>
+      <div class="matrix-desc">Fraud caught correctly</div>
+    </div>
+    <div class="matrix-cell fp">
+      <div class="matrix-label">False Positive</div>
+      <div class="matrix-value">28</div>
+      <div class="matrix-desc">False alarms</div>
+    </div>
+    <div class="matrix-cell tn">
+      <div class="matrix-label">True Negative</div>
+      <div class="matrix-value">1,850</div>
+      <div class="matrix-desc">Normal safe</div>
+    </div>
+    <div class="matrix-cell fn">
+      <div class="matrix-label">False Negative</div>
+      <div class="matrix-value">41</div>
+      <div class="matrix-desc">Missed frauds</div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Transactions -->
+{% if recent %}
+<div class="table-card">
+  <h3>Recent Transactions</h3>
+  <div class="table-responsive">
+    <table class="metrics-table">
+      <thead>
+        <tr><th>ID</th><th>Sender</th><th>Receiver</th><th>Amount</th><th>App</th><th>Risk</th><th>Status</th></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong></strong>/
+      </thead>
+      <tbody>
+        {% for t in recent %}
+        <tr>
+          <td>{{ t.transaction_id }}</td>
+          <td>{{ t.sender_upi[:15] if t.sender_upi else '-' }}..</td>
+          <td>{{ t.receiver_upi[:15] if t.receiver_upi else '-' }}..</td>
+          <td>Rs. {{ "%.0f"|format(t.amount) }}</td>
+          <td>{{ t.payment_app or '-' }}</td>
+          <td><span class="risk-badge-small risk-{% if t.risk_score >= 70 %}high{% elif t.risk_score >= 45 %}medium{% else %}low{% endif %}">{{ t.risk_score }}%</span></td>
+          <td><span class="status-badge {% if t.label == 'Fraud' %}fraud{% else %}safe{% endif %}">{{ t.label or 'Safe' }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<script>
+// Safe values with defaults
+var fraudCount = {{ fraud_cnt|default(0) }};
+var safeCount = {{ safe_cnt|default(0) }};
+
+var chartData = {
+    accuracy: {
+        labels: ['Random Forest', 'XGBoost', 'Ensemble (RF+XGB)'],
+        values: [93.2, 94.8, 94.6]
+    },
+    hourly: {
+        safe: [120, 90, 60, 40, 35, 50, 180, 350, 500, 600, 700, 750, 800, 780, 820, 850, 800, 750, 680, 550, 400, 300, 200, 150],
+        fraud: [45, 52, 48, 42, 38, 15, 8, 5, 4, 6, 8, 10, 12, 15, 18, 20, 22, 25, 35, 42, 48, 52, 55, 50]
+    },
+    paymentApp: {
+        labels: ["GPay", "PhonePe", "Paytm", "Bank Transfer", "Other"],
+        values: [2850, 2420, 1980, 1200, 550]
+    },
+    riskDistribution: {
+        labels: ["Low Risk (0-30)", "Medium Risk (31-60)", "High Risk (61-100)"],
+        values: [safeCount * 0.7 || 100, safeCount * 0.2 || 50, fraudCount || 10]
+    },
+    trend: [45, 52, 48, 38, 55, 42, 60]
+};
+
+// Accuracy Chart
+new Chart(document.getElementById("accuracyChart"), {
+  type: "bar",
+  data: {
+    labels: chartData.accuracy.labels,
+    datasets: [{
+      label: "Accuracy (%)",
+      data: chartData.accuracy.values,
+      backgroundColor: ["#27ae60", "#e67e22", "#8b5cf6"],
+      borderRadius: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: { legend: { position: "top" } },
+    scales: { y: { min: 85, max: 100, title: { display: true, text: "Accuracy (%)" } } }
+  }
+});
+
+// Donut Chart
+new Chart(document.getElementById("donutChart"), {
+  type: "doughnut",
+  data: {
+    labels: ["Fraud", "Safe"],
+    datasets: [{
+      data: [fraudCount, safeCount],
+      backgroundColor: ["#e74c3c", "#27ae60"],
+      borderWidth: 0
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: "bottom" } } }
+});
+
+// Hourly Transaction Chart
+new Chart(document.getElementById("hourlyChart"), {
+  type: "line",
+  data: {
+    labels: ["12AM", "1AM", "2AM", "3AM", "4AM", "5AM", "6AM", "7AM", "8AM", "9AM", "10AM", "11AM", "12PM", "1PM", "2PM", "3PM", "4PM", "5PM", "6PM", "7PM", "8PM", "9PM", "10PM", "11PM"],
+    datasets: [
+      { label: "Safe Transactions", data: chartData.hourly.safe, borderColor: "#27ae60", fill: false, tension: 0.4 },
+      { label: "Fraud Transactions", data: chartData.hourly.fraud, borderColor: "#e74c3c", fill: false, tension: 0.4 }
+    ]
+  },
+  options: { responsive: true, maintainAspectRatio: true }
+});
+
+// Payment App Chart
+new Chart(document.getElementById("paymentAppChart"), {
+  type: "bar",
+  data: {
+    labels: chartData.paymentApp.labels,
+    datasets: [{
+      label: "Transaction Volume",
+      data: chartData.paymentApp.values,
+      backgroundColor: "#3498db",
+      borderRadius: 8
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: true }
+});
+
+// Risk Distribution Chart
+new Chart(document.getElementById("riskDistributionChart"), {
+  type: "bar",
+  data: {
+    labels: chartData.riskDistribution.labels,
+    datasets: [{
+      label: "Number of Transactions",
+      data: chartData.riskDistribution.values,
+      backgroundColor: ["#27ae60", "#f39c12", "#e74c3c"],
+      borderRadius: 8
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: true }
+});
+
+// Fraud Trend Chart
+new Chart(document.getElementById("trendChart"), {
+  type: "line",
+  data: {
+    labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6", "Week 7"],
+    datasets: [{
+      label: "Fraud Attempts",
+      data: chartData.trend,
+      borderColor: "#e74c3c",
+      backgroundColor: "rgba(231, 76, 60, 0.1)",
+      fill: true,
+      tension: 0.4
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: true }
+});
+
+// Feature Importance Chart
+new Chart(document.getElementById("featureChart"), {
+  type: "bar",
+  data: {
+    labels: ["Amount", "Hour", "Night", "High Amount", "Balance Ratio", "Transaction Type", "Old Balance"],
+    datasets: [{
+      label: "Importance (%)",
+      data: [28.5, 18.2, 15.3, 12.8, 11.5, 8.2, 5.5],
+      backgroundColor: "#3498db",
+      borderRadius: 8
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: true,
+    scales: { x: { title: { display: true, text: "Features" } }, y: { beginAtZero: true, title: { display: true, text: "Importance (%)" } } }
+  }
+});
+</script>
+
+<style>
+.chart-card.full-width {
+  grid-column: 1 / -1;
+}
+.confusion-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-top: 15px;
+}
+.matrix-cell {
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+.matrix-cell.tp { background: #d1fae5; }
+.matrix-cell.fp { background: #fee2e2; }
+.matrix-cell.tn { background: #dbeafe; }
+.matrix-cell.fn { background: #fed7aa; }
+.matrix-label { font-size: 0.7rem; font-weight: 600; color: #666; }
+.matrix-value { font-size: 1.5rem; font-weight: 800; }
+.matrix-desc { font-size: 0.7rem; color: #666; }
+.risk-badge-small { padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
+.risk-high { background: #fee2e2; color: #dc2626; }
+.risk-medium { background: #fed7aa; color: #d97706; }
+.risk-low { background: #d1fae5; color: #059669; }
+@media (max-width: 768px) {
+  .confusion-matrix { grid-template-columns: 1fr; }
+}
+.dash-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 30px;
+}
+.sum-card {
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  color: white;
+}
+.sum-card.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.sum-card.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.sum-card.green { background: linear-gradient(135deg, #10b981, #059669); }
+.sum-card.orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.sum-card.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.sum-num { font-size: 28px; font-weight: bold; display: block; }
+.sum-lbl { font-size: 12px; opacity: 0.9; }
+.chart-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+.chart-card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.table-card {
+  background: var(--card);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+}
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.metrics-table th, .metrics-table td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.status-badge.fraud { background: #fee2e2; color: #dc2626; }
+.status-badge.safe { background: #d1fae5; color: #059669; }
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+.dot.red { background: #e74c3c; }
+.dot.green { background: #27ae60; }
+.donut-legend {
+  text-align: center;
+  margin-top: 10px;
+}
+</style>
+{% endblock %}

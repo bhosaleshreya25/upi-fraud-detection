@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}My Reports{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>My Fraud Reports</h1>
+  <p>Track all your fraud reports and their status</p>
+</div>
+
+{% if reports %}
+<div class="table-container">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Report ID</th>
+        <th>UPI ID</th>
+        <th>Transaction ID</th>
+        <th>Amount</th>
+        <th>Fraud Type</th>
+        <th>Status</th>
+        <th>Description</th>
+        <th>Reported Date</th>
+        <th>Admin Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in reports %}
+      <tr class="{% if report.status == 'pending' %}status-pending{% elif report.status == 'resolved' %}status-resolved{% else %}status-rejected{% endif %}">
+        <td><strong>{{ report.report_id }}</strong></td>
+        <td>{{ report.upi_id or 'N/A' }}</td>
+        <td>{{ report.transaction_id or 'N/A' }}</td>
+        <td>₹{{ "%.2f"|format(report.amount) }}</td>
+        <td>{{ report.fraud_type or 'N/A' }}</td>
+        <td>
+          <span class="status-badge status-{{ report.status }}">
+            {{ report.status|upper }}
+          </span>
+        </td>
+        <td>{{ report.description or 'N/A' }}</td>
+        <td>{{ report.created_at }}</td>
+        <td>{{ report.admin_notes or 'Pending review' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <p>No reports found.</p>
+  <a href="{{ url_for('report_fraud_page') }}" class="btn-primary">Report Fraud Now</a>
+</div>
+{% endif %}
+
+<style>
+  .page-header {
+    margin-bottom: 30px;
+  }
+  .page-header h1 {
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .page-header p {
+    color: var(--muted);
+  }
+  .table-container {
+    overflow-x: auto;
+    background: var(--card);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table th,
+  .data-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table th {
+    background: var(--bg);
+    font-weight: 600;
+    color: var(--text);
+  }
+  .data-table tr:hover {
+    background: var(--bg);
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-pending {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  .status-resolved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+  .status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  tr.status-pending {
+    border-left: 4px solid #f59e0b;
+  }
+  tr.status-resolved {
+    border-left: 4px solid #10b981;
+  }
+  tr.status-rejected {
+    border-left: 4px solid #ef4444;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--card);
+    border-radius: 12px;
+  }
+  .empty-state p {
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .btn-primary {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #3b82f6;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s;
+  }
+  .btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-2px);
+  }
+</style>
+{% endblock %}
